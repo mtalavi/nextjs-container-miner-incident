@@ -11,7 +11,7 @@ GitHub: **[@mtalavi](https://github.com/mtalavi)**
 
 A Docker-based SaaS deployment showed abnormal CPU usage. The host and deployment platform initially looked healthy, but investigation isolated the load to a single web container.
 
-After stopping the affected container, the load dropped immediately. A filesystem diff showed new files created after container startup, including miner-like binaries and cron persistence artifacts.
+After stopping the affected container, the load dropped immediately. A filesystem diff showed new files created after container startup, including miner-like binaries and persistence artifacts.
 
 The incident pattern was not one isolated mistake. It was a chain:
 
@@ -22,6 +22,53 @@ outdated framework
 + weak deployment hardening
 = easy post-exploitation persistence
 ```
+
+## Exact affected versions
+
+The affected web service used this framework stack at the time of the incident:
+
+```text
+next: 15.1.3
+react: 19.0.0
+react-dom: 19.0.0
+@next/swc-linux-x64-gnu: 15.1.3
+@next/swc-linux-x64-musl: 15.1.3
+eslint-config-next: 15.1.3
+```
+
+It was remediated to:
+
+```text
+next: 15.5.19
+react: 19.1.2
+react-dom: 19.1.2
+@next/swc-linux-x64-gnu: 15.5.19
+@next/swc-linux-x64-musl: 15.5.19
+eslint-config-next: 15.5.19
+```
+
+The vulnerable version came from the initial monorepo scaffold and was carried forward through the lockfile. The deployment platform did not choose the vulnerable version; it built and ran what the repository defined.
+
+## Deployment technique
+
+The affected deployment pattern was:
+
+```text
+AI-assisted monorepo scaffold
+→ npm lockfile pins framework versions
+→ Docker Compose stack builds service images
+→ deployment platform runs the Compose-defined services
+→ web service runs Next.js standalone server
+→ container runs as root with a writable filesystem
+```
+
+The relevant web runtime pattern was:
+
+```text
+node apps/web/server.js
+```
+
+Docker Compose and deployment platforms are normal tools. The risk came from the combination of outdated framework versions, root runtime, writable filesystem, broad internal-service exposure risk, and missing pre-deploy security gates.
 
 ## Why this matters
 
@@ -76,6 +123,7 @@ The high-level response was:
 ```text
 docs/
   incident-report.md        Full anonymized write-up
+  deployment-context.md     Exact sanitized versions and deployment technique
   mitigation-checklist.md   Practical hardening checklist
   indicators.md             Safe, sanitized indicators
   publication-notes.md      What was intentionally omitted
@@ -92,6 +140,7 @@ DISCLAIMER.md               Scope and limitations
 - Next.js security advisory for CVE-2025-66478: https://nextjs.org/blog/CVE-2025-66478
 - GitHub advisory for CVE-2025-29927: https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw
 - Docker Engine security documentation: https://docs.docker.com/engine/security/
+- Docker Compose build documentation: https://docs.docker.com/reference/cli/docker/compose/build/
 - XMRig command-line options: https://xmrig.com/docs/miner/command-line-options
 
 ## License
