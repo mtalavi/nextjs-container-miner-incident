@@ -1,0 +1,16 @@
+# Repository metadata template
+# This file documents the intended GitHub About settings.
+# Some GitHub connectors cannot update About/topics directly, so this file keeps the metadata versioned.
+
+description: "An anonymized real-world Next.js container compromise case study and mitigation checklist for SaaS teams using Docker and AI-assisted development."
+homepage: ""
+topics:
+  - nextjs
+  - docker
+  - container-security
+  - incident-response
+  - devsecops
+  - saas
+  - coolify
+  - cryptomining
+  - security-hardening
